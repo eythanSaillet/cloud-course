@@ -13,59 +13,62 @@ const knex = require('knex')({
 	},
 })
 
+// Random seed lib
+let rand = require('random-seed').create()
+
 // Setup routes
 
-app.get('/', async function (req, res) {
+app.get('/', function (req, res) {
 	res.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
-// app.get('/:sign', async function (req, res) {
-// 	knex.raw(`SELECT horoscope FROM horoscopes WHERE sign = ${req.params.sign} LIMIT 10`)
-// 		.then((sign) => {
-// 			return res.status(200).json(sign)
-// 		})
-// 		.catch((err) => {
-// 			return res.status(400).json(err)
-// 		})
-// })
-
-app.get('/:sign', async function (req, res) {
-	return (
-		knex
-			// // .raw(
-			// // 	`
-			// // 	SELECT setseed(0.6);
-			// // 	SELECT uuid, horoscope, sign FROM horoscopes WHERE sign ='${req.params.sign}' ORDER BY random() LIMIT 1`
-			// // )
-			// .raw(
-			// 	`SELECT setseed(0.6);
-			// 	SELECT random()`
-			// )
-			.raw(`SELECT * FROM horoscopes`)
-			.then((data) => {
-				console.log(req)
-				return res.status(200).json(data)
-			})
-			.catch((err) => {
-				console.log(err)
-				return res.status(400).json(err)
-			})
-	)
+app.get('/horoscopes/:sign', function (req, res) {
+	knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes  WHERE sign = '${req.params.sign}' ORDER BY random() LIMIT 1`)
+		.then((data) => {
+			console.log(data)
+			return res.status(200).json(data.rows)
+		})
+		.catch((err) => {
+			console.log(err)
+			return res.status(400).json(err)
+		})
 })
 
-// 	return knex
-// 		.insert({
-// 			name: req.body.name,
-// 			age: req.body.age,
-// 		})
-// 		.into('users')
-// 		.then((user) => {
-// 			return res.status(201).json(user)
-// 		})
-// 		.catch((err) => {
-// 			return res.status(400).json(err)
-// 		})
-// })
+app.get('/horoscopes/:sign/:number', function (req, res) {
+	knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes  WHERE sign = '${req.params.sign}' ORDER BY random() LIMIT ${req.params.number}`)
+		.then((data) => {
+			console.log(data)
+			return res.status(200).json(data.rows)
+		})
+		.catch((err) => {
+			console.log(err)
+			return res.status(400).json(err)
+		})
+})
+
+app.get('/today', async function (req, res) {
+	let data
+	try {
+		data = await knex.raw(`SELECT COUNT(*) FROM horoscopes`)
+	} catch (err) {
+		return res.status(400).json(err)
+	}
+
+	let numberOfLines = data.rows[0].count
+	let date = new Date()
+	let seed = `${date.getDate()}${date.getMonth() + 1}${date.getFullYear()}`
+	rand.seed(seed)
+	let key = rand(numberOfLines)
+
+	let results
+	try {
+		results = await knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes WHERE id = ${key}`)
+	} catch (err) {
+		console.log(err)
+		return res.status(400).json(err)
+	}
+	return res.status(200).json(results.rows)
+})
 
 app.listen(port, () => {
 	console.log(`App running on port ${port}.`)
