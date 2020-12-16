@@ -2,14 +2,14 @@ require('dotenv').config()
 
 const express = require('express')
 const app = express()
-const port = 3000
+const port = process.env.PORT || 3000
 app.use(express.json())
 
 // Connect to the DB
 const knex = require('knex')({
 	client: 'pg',
 	connection: {
-		connectionString: 'postgres://process.env.DB_USERNAME:process.env.DB_PASSWORD@localhost:process.env.DB_PORT/process.env.DB?sslmode=disable',
+		connectionString: process.env.DATABASE_URL,
 	},
 })
 
@@ -41,7 +41,7 @@ app.get('/:sign', async function (req, res) {
 			// 	`SELECT setseed(0.6);
 			// 	SELECT random()`
 			// )
-			.raw(`SELECT count(*) FROM horoscopes`)
+			.raw(`SELECT * FROM horoscopes`)
 			.then((data) => {
 				console.log(req)
 				return res.status(200).json(data)
