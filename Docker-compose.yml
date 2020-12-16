@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+    postgres:
+        image: 'postgres:12'
+        environment:
+            POSTGRES_DB: cours
+            POSTGRES_USER: cours
+            POSTGRES_PASSWORD: cours
+        volumes:
+            - cours:/var/lib/postgresql/data
+        ports:
+            - 2000:5432
+
+volumes:
+    cours:
