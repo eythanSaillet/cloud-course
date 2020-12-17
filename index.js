@@ -19,31 +19,34 @@ let rand = require('random-seed').create()
 // Setup routes
 
 app.get('/', function (req, res) {
-	res.json({ info: 'Node.js, Express, and Postgres API' })
+	res.json({ info: 'The horoscope API reference for your apps and website.' })
 })
 
-app.get('/horoscopes/:sign', function (req, res) {
-	knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes  WHERE sign = '${req.params.sign}' ORDER BY random() LIMIT 1`)
-		.then((data) => {
-			console.log(data)
-			return res.status(200).json(data.rows)
-		})
-		.catch((err) => {
-			console.log(err)
-			return res.status(400).json(err)
-		})
-})
+app.get('/random', async function (req, res) {
+	// Handle wrong sign name
+	let correctSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces', 'all']
+	let correctSign = correctSigns.includes(req.query.sign)
+	if (correctSign === false) {
+		return res.status(400).json({ errorCode: 400, error: 'Invalid astrological sign.' })
+	}
 
-app.get('/horoscopes/:sign/:number', function (req, res) {
-	knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes  WHERE sign = '${req.params.sign}' ORDER BY random() LIMIT ${req.params.number}`)
-		.then((data) => {
-			console.log(data)
-			return res.status(200).json(data.rows)
-		})
-		.catch((err) => {
-			console.log(err)
-			return res.status(400).json(err)
-		})
+	// Default number is 1 and max is 100.
+	let number = req.query.number === undefined ? 1 : req.query.number
+	number = req.query.number > 100 ? 100 : number
+
+	// Handle request with 'all' sign possibility
+	let data = []
+	try {
+		let signs = req.query.sign === 'all' ? ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'] : [req.query.sign]
+		for (const _sign of signs) {
+			let response = await knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes  WHERE sign = '${_sign}' ORDER BY random() LIMIT ${number}`)
+			data.push(response.rows[0])
+		}
+		for (let i = 0; i < signs.length; i++) {}
+	} catch (err) {
+		return res.status(400).json(err)
+	}
+	return res.status(200).json(data)
 })
 
 app.get('/today', async function (req, res) {
