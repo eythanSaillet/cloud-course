@@ -1,4 +1,5 @@
 require('dotenv').config()
+let sha1 = require('sha-1')
 
 const express = require('express')
 const app = express()
@@ -23,6 +24,19 @@ app.get('/', function (req, res) {
 })
 
 app.get('/random', async function (req, res) {
+	// Check API Key
+	if (req.query.key === undefined) {
+		return res.status(401).json({ errorCode: 401, error: 'Please add your API key.' })
+	}
+	try {
+		let response = await knex.raw(`SELECT uuid FROM users WHERE key = '${sha1(req.query.key)}'`)
+		if (response.rows.length === 0) {
+			return res.status(401).json({ errorCode: 401, error: 'Invalid API key.' })
+		}
+	} catch (err) {
+		return res.status(400).json(err)
+	}
+
 	// Handle wrong sign name
 	const correctSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces', 'all']
 	const correctSign = correctSigns.includes(req.query.sign)
@@ -52,6 +66,19 @@ app.get('/random', async function (req, res) {
 })
 
 app.get('/today', async function (req, res) {
+	// Check API Key
+	if (req.query.key === undefined) {
+		return res.status(401).json({ errorCode: 401, error: 'Please add your API key.' })
+	}
+	try {
+		let response = await knex.raw(`SELECT uuid FROM users WHERE key = '${sha1(req.query.key)}'`)
+		if (response.rows.length === 0) {
+			return res.status(401).json({ errorCode: 401, error: 'Invalid API key.' })
+		}
+	} catch (err) {
+		return res.status(400).json(err)
+	}
+
 	// Handle wrong sign name
 	const correctSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces', 'all']
 	const correctSign = correctSigns.includes(req.query.sign)
