@@ -24,8 +24,8 @@ app.get('/', function (req, res) {
 
 app.get('/random', async function (req, res) {
 	// Handle wrong sign name
-	let correctSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces', 'all']
-	let correctSign = correctSigns.includes(req.query.sign)
+	const correctSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces', 'all']
+	const correctSign = correctSigns.includes(req.query.sign)
 	if (correctSign === false) {
 		return res.status(400).json({ errorCode: 400, error: 'Invalid astrological sign.' })
 	}
@@ -37,9 +37,9 @@ app.get('/random', async function (req, res) {
 	// Handle request with 'all' sign possibility
 	let data = []
 	try {
-		let signs = req.query.sign === 'all' ? ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'] : [req.query.sign]
+		const signs = req.query.sign === 'all' ? ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'] : [req.query.sign]
 		for (const _sign of signs) {
-			let response = await knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes  WHERE sign = '${_sign}' ORDER BY random() LIMIT ${number}`)
+			const response = await knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes  WHERE sign = '${_sign}' ORDER BY random() LIMIT ${number}`)
 			data.push(response.rows[0])
 		}
 		for (let i = 0; i < signs.length; i++) {}
@@ -50,27 +50,30 @@ app.get('/random', async function (req, res) {
 })
 
 app.get('/today', async function (req, res) {
-	let data
+	const date = new Date()
+
+	// Handle request with 'all' sign possibility
+	const signs = req.query.sign === 'all' ? ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'] : [req.query.sign]
+
+	let data = []
 	try {
-		data = await knex.raw(`SELECT COUNT(*) FROM horoscopes`)
+		for (const _sign of signs) {
+			// Count numberOfLines for specific sign
+			const numberOfLines = (await knex.raw(`SELECT COUNT(*) FROM horoscopes WHERE sign = '${_sign}'`)).rows[0].count
+
+			// Create key for specific sign according to a seed which is the date
+			const seed = `${date.getDate()}${date.getMonth() + 1}${date.getFullYear()}${_sign}`
+			rand.seed(seed)
+			const key = rand(numberOfLines)
+
+			// Select one line from all lines of a sign according to the seed
+			results = await knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes WHERE sign = '${_sign}'`)
+			data.push(results.rows[key])
+		}
 	} catch (err) {
 		return res.status(400).json(err)
 	}
-
-	let numberOfLines = data.rows[0].count
-	let date = new Date()
-	let seed = `${date.getDate()}${date.getMonth() + 1}${date.getFullYear()}`
-	rand.seed(seed)
-	let key = rand(numberOfLines)
-
-	let results
-	try {
-		results = await knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes WHERE id = ${key}`)
-	} catch (err) {
-		console.log(err)
-		return res.status(400).json(err)
-	}
-	return res.status(200).json(results.rows)
+	return res.status(200).json(data)
 })
 
 app.listen(port, () => {
