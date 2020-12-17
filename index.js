@@ -40,7 +40,9 @@ app.get('/random', async function (req, res) {
 		const signs = req.query.sign === 'all' ? ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'] : [req.query.sign]
 		for (const _sign of signs) {
 			const response = await knex.raw(`SELECT uuid, horoscope, sign FROM horoscopes  WHERE sign = '${_sign}' ORDER BY random() LIMIT ${number}`)
-			data.push(response.rows[0])
+			for (const _row of response.rows) {
+				data.push(_row)
+			}
 		}
 		for (let i = 0; i < signs.length; i++) {}
 	} catch (err) {
