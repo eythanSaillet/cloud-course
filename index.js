@@ -50,6 +50,13 @@ app.get('/random', async function (req, res) {
 })
 
 app.get('/today', async function (req, res) {
+	// Handle wrong sign name
+	const correctSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces', 'all']
+	const correctSign = correctSigns.includes(req.query.sign)
+	if (correctSign === false) {
+		return res.status(400).json({ errorCode: 400, error: 'Invalid astrological sign.' })
+	}
+
 	const date = new Date()
 
 	// Handle request with 'all' sign possibility
